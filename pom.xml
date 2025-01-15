@@ -29,24 +29,25 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>common</artifactId>
-        <version>[7.8.0-0, 7.8.1-0)</version>
+        <version>[8.0.0-0, 8.0.1-0)</version>
     </parent>
 
     <groupId>io.confluent.ksql</groupId>
     <artifactId>ksqldb-parent</artifactId>
     <packaging>pom</packaging>
     <name>ksqldb-parent</name>
-    <version>7.8.0-0</version>
+    <version>8.0.0-0</version>
 
     <licenses>
         <license>
             <name>Confluent Community License</name>
-            <url>http://www.confluent.io/confluent-community-license</url>
+            <url>https://www.confluent.io/confluent-community-license</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
 
     <modules>
+        <module>ksqldb-stream-lib</module>
         <module>ksqldb-udf</module>
         <module>ksqldb-common</module>
         <module>ksqldb-udf-quickstart</module>
@@ -84,7 +85,7 @@
         </repository>
         <repository>
             <id>confluent-snapshots</id>
-            <url>https://s3-us-west-2.amazonaws.com/confluent-snapshots/</url>
+            <url>https://confluent-snapshots.public.confluent.io/</url>
         </repository>
     </repositories>
 
@@ -95,7 +96,7 @@
         </pluginRepository>
         <pluginRepository>
             <id>confluent-snapshots</id>
-            <url>https://s3-us-west-2.amazonaws.com/confluent-snapshots/</url>
+            <url>https://confluent-snapshots.public.confluent.io/</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -118,7 +119,7 @@
         <lang3.version>3.5</lang3.version>
         <retrying.version>2.0.0</retrying.version>
         <inject.version>1</inject.version>
-        <janino.version>3.0.7</janino.version>
+        <janino.version>3.1.10</janino.version>
         <javax-validation.version>2.0.1.Final</javax-validation.version>
         <jline.version>3.13.1</jline.version>
         <jna.version>4.4.0</jna.version>
@@ -129,9 +130,8 @@
         <avro.random.generator.version>0.2.2</avro.random.generator.version>
         <apache.curator.version>5.2.0</apache.curator.version>
         <wiremock.version>2.24.0</wiremock.version>
-        <clearspring-analytics.version>2.9.5</clearspring-analytics.version>
         <icu.version>67.1</icu.version>
-        <vertx.version>4.4.6</vertx.version>
+        <vertx.version>4.4.8</vertx.version>
         <reactive-streams.version>1.0.3</reactive-streams.version>
         <skip.docker.build>true</skip.docker.build>
         <skip.docker.test>true</skip.docker.test>
@@ -141,17 +141,17 @@
         <jetty.version>9.4.53.v20231009</jetty.version>
         <git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
         <apache.io.version>2.11.0</apache.io.version>
-        <io.confluent.ksql.version>7.8.0-0</io.confluent.ksql.version>
+        <io.confluent.ksql.version>8.0.0-0</io.confluent.ksql.version>
         <io.confluent.schema-registry.version>${confluent.version.range}</io.confluent.schema-registry.version>
-        <netty-tcnative-version>2.0.65.Final</netty-tcnative-version>
+        <netty-tcnative-version>2.0.69.Final</netty-tcnative-version>
         <!-- We normally get this from common, but Vertx is built against this -->
         <!-- Note: `netty` depends on `tcnative` and if we bump `netty`
              we might need to bump `tcnative`, too.
              Please check top level `pom.xml` at https://github.com/netty/netty
              for the netty version we bump to (ie, corresponding git tag),
              to find the correct `tcnative` version. -->
-        <netty.version>4.1.108.Final</netty.version>
-        <netty-codec-http2-version>4.1.108.Final</netty-codec-http2-version>
+        <netty.version>4.1.115.Final</netty.version>
+        <netty-codec-http2-version>4.1.115.Final</netty-codec-http2-version>
         <jersey-common>2.39.1</jersey-common>
         <multi-threaded-testing.forkCount>3</multi-threaded-testing.forkCount>
         <kafka.version>${ce.kafka.version}</kafka.version>
@@ -255,6 +255,12 @@
                         <artifactId>slf4j-log4j12</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>connect-test-plugins</artifactId>
+                <version>${kafka.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.kafka</groupId>
@@ -412,12 +418,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.kafka</groupId>
-                <artifactId>kafka-log4j-appender</artifactId>
-                <version>${kafka.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>io.confluent</groupId>
                 <artifactId>common-utils</artifactId>
                 <version>${io.confluent.common.version}</version>
@@ -560,7 +560,7 @@
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>${apache.io.version}</version>
+                <version>${commons-io.version}</version>
             </dependency>
 
             <dependency>
@@ -585,12 +585,6 @@
                 <groupId>javax.validation</groupId>
                 <artifactId>validation-api</artifactId>
                 <version>${javax-validation.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.clearspring.analytics</groupId>
-                <artifactId>stream</artifactId>
-                <version>${clearspring-analytics.version}</version>
             </dependency>
 
             <dependency>
@@ -809,7 +803,7 @@
                         <junit.platform.execution.listeners.deactivate>org.apache.kafka.test.ThreadLeakListener</junit.platform.execution.listeners.deactivate>
                     </systemPropertyVariables>
                     <argLine>-verbose:gc -Xloggc:"${project.build.directory}/gc.log"</argLine>
-                    <argLine>-Duser.timezone=UTC -Xmx1g -Xms1g -XX:MaxPermSize=256m</argLine>
+                    <argLine>-Duser.timezone=UTC -Xmx1g -Xms1g</argLine>
                     <excludedGroups>io.confluent.common.utils.IntegrationTest, IntegrationTest</excludedGroups>
                 </configuration>
                 <version>3.2.5</version>
@@ -829,8 +823,6 @@
                     <systemPropertyVariables>
                         <junit.platform.execution.listeners.deactivate>org.apache.kafka.test.ThreadLeakListener</junit.platform.execution.listeners.deactivate>
                     </systemPropertyVariables>
-                    <!-- Skip ITs temporarily -->
-                    <skipITs>true</skipITs>
                 </configuration>
                 <executions>
                     <execution>
@@ -859,8 +851,6 @@
                             <useUnlimitedThreads>true</useUnlimitedThreads>
                             <forkedProcessTimeoutInSeconds>3600</forkedProcessTimeoutInSeconds>
                             <forkedProcessExitTimeoutInSeconds>180</forkedProcessExitTimeoutInSeconds>
-                            <!-- Skip ITs temporarily -->
-                            <skipITs>true</skipITs>
                         </configuration>
                     </execution>
                 </executions>
@@ -919,6 +909,9 @@
                     <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
                     <generateGitPropertiesFile>true</generateGitPropertiesFile>
                     <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+                    <includeOnlyProperties>
+                        <includeOnlyProperty>git.commit.id</includeOnlyProperty>
+                    </includeOnlyProperties>
                 </configuration>
             </plugin>
             <plugin>

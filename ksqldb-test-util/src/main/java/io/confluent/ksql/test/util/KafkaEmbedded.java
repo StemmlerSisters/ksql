@@ -53,7 +53,7 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
-import org.apache.kafka.common.utils.SystemTime;
+import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.Iterator;
@@ -72,6 +72,9 @@ class KafkaEmbedded {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaEmbedded.class);
 
+  private static final String ZK_CONNECT_PROP = "zookeeper.connect";
+  private static final String LOG_DIR_PROP = "log.dir";
+
   private final Properties config;
   private final KafkaServer kafka;
 
@@ -89,7 +92,7 @@ class KafkaEmbedded {
     log.debug("Starting embedded Kafka broker (with log.dirs={} and ZK ensemble at {}) ...",
         logDir(), zookeeperConnect());
 
-    kafka = TestUtils.createServer(kafkaConfig, new SystemTime());
+    kafka = TestUtils.createServer(kafkaConfig, Time.SYSTEM);
     log.debug("Startup of embedded Kafka broker at {} completed (with ZK ensemble at {}) ...",
         brokerList(), zookeeperConnect());
   }
@@ -244,7 +247,7 @@ class KafkaEmbedded {
       };
 
       assertThatEventually(
-          "topics not all prresent after timeout",
+          "topics not all present after timeout",
           remaining,
           is(required)
       );
@@ -345,11 +348,11 @@ class KafkaEmbedded {
   }
 
   private String zookeeperConnect() {
-    return config.getProperty(KafkaConfig.ZkConnectProp());
+    return config.getProperty(ZK_CONNECT_PROP);
   }
 
   private String logDir() {
-    return config.getProperty(KafkaConfig.LogDirProp());
+    return config.getProperty(LOG_DIR_PROP);
   }
 
   private AdminClient adminClient() {

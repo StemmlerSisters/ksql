@@ -24,8 +24,8 @@ global_job_config:
   prologue:
     commands:
       - checkout
-      - cache restore
-      - sem-version java 11
+      - . set-cp-java-version
+      - . cache-maven restore
 
 blocks:
   - name: Test
@@ -34,26 +34,18 @@ blocks:
       # don't run the tests on non-functional changes...
       when: "change_in('/', {exclude: ['/.deployed-versions/', '.github/']})"
     task:
-      env_vars:
-        - name: SEMAPHORE_AGENT_UPLOAD_JOB_LOGS
-          value: when-trimmed
       jobs:
         - name: Test
           commands:
-            - . ci-tools ci-update-version
-            - mvn -Dsurefire.rerunFailingTestsCount=3 -Dmaven.gitcommitid.nativegit=true -U -Dmaven.wagon.http.retryHandler.count=10 --batch-mode --no-transfer-progress clean install
-#            - mkdir -p thread-leak-tests
-#            - mv leaked_tests_summary.txt thread-leak-tests/
-#            - find . -path "*/thread-reports/**" -name "leakedTestStackDump-*.log" -not -path "thread-leak-tests/*" -exec mv {} thread-leak-tests/ \;
-#            - artifact push workflow thread-leak-tests
-#            - mkdir -p build-hang-files
-#            - find . -type f -name "build-timeout-java-thread-dump-*.log" -not -path "build-hang-files/*" -exec mv {} build-hang-files/ \;
-#            - artifact push workflow build-hang-files
+            - ci-tools ci-update-version
+            - ./mvnw -Dmaven.gitcommitid.nativegit=true -U -Dmaven.wagon.http.retryHandler.count=10 --batch-mode --no-transfer-progress clean install
+            - . cache-maven store
       epilogue:
         always:
           commands:
             - . publish-test-results
             - artifact push workflow target/test-results
+            - artifact push workflow target
 
   - name: Release
     dependencies: ["Test"]
@@ -63,12 +55,35 @@ blocks:
       jobs:
         - name: Release
           commands:
-            - git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-            - git fetch --unshallow || true
-            - . ci-tools ci-update-version
-            - . ci-tools ci-push-tag
+            - ci-tools ci-update-version
+            - ci-tools ci-push-tag
             - mvn -Ddocker.skip=true -U -Dmaven.wagon.http.retryHandler.count=10 --batch-mode -DaltDeploymentRepository=confluent-codeartifact-internal::default::https://confluent-519856050701.d.codeartifact.us-west-2.amazonaws.com/maven/maven-snapshots/
               -DrepositoryId=confluent-codeartifact-internal deploy -DskipTests
+
+  - name: CP Jar Build CI Gating
+    dependencies: [ ]
+    run:
+      # Run this block only for pull requests
+      when: "pull_request =~ '.*'"
+    task:
+      env_vars:
+        - name: COMPONENT_NAME
+          value: ksqldb
+      jobs:
+        - name: Trigger and wait for CP Jar Build Task
+          commands:
+            # Don't run this block if target branch for PR is not a CP nightly branch
+            - |
+              if [[ "$SEMAPHORE_GIT_BRANCH" =~ ^[0-9]+\.[0-9]+\.x$ ]] ; then \
+                  echo "PR is targeted to ${SEMAPHORE_GIT_BRANCH} branch which is CP nightly branch. Triggering cp-jar-build task."; \
+                  sem-trigger -p packaging \
+                    -t cp-jar-build \
+                    -b $SEMAPHORE_GIT_BRANCH \
+                    -d "|" -i "CUSTOM_BRANCH_COMPONENTS|${COMPONENT_NAME}=${SEMAPHORE_GIT_WORKING_BRANCH}" \
+                    -w; \
+              else \
+                  echo "PR is targeted to ${SEMAPHORE_GIT_BRANCH} branch which is not CP nightly branch. Skipping cp-jar-build task."; \
+              fi;
 
 after_pipeline:
   task:
@@ -86,7 +101,8 @@ after_pipeline:
         commands:
           - checkout
           - sem-version java 11
-          - emit-sonarqube-data -a test-results
+          - artifact pull workflow target
+          - emit-sonarqube-data --run_only_sonar_scan
       - name: Trigger downstream projects
         commands:
           - >-

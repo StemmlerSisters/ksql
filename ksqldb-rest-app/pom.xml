@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.confluent.ksql</groupId>
         <artifactId>ksqldb-parent</artifactId>
-        <version>7.8.0-0</version>
+        <version>8.0.0-0</version>
     </parent>
 
     <artifactId>ksqldb-rest-app</artifactId>
@@ -95,12 +95,6 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jdk8</artifactId>
             <version>${jackson.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-log4j-appender</artifactId>
-            <version>${kafka.version}</version>
         </dependency>
 
         <dependency>
@@ -196,9 +190,19 @@
         </dependency>
 
         <dependency>
-            <groupId>com.kjetland</groupId>
-            <artifactId>mbknor-jackson-jsonschema_${kafka.scala.version}</artifactId>
-            <version>1.0.39</version>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>connect-test-plugins</artifactId>
+            <version>${kafka.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <!-- io.yokota is a fork of com.kjetland -->
+            <!-- schema-registry is dependent on io.yokota:mbknor-jackson-jsonschema-java8 -->
+            <!-- hence all the downstream projects had to use that one only -->
+            <groupId>io.yokota</groupId>
+            <artifactId>mbknor-jackson-jsonschema-java8</artifactId>
+            <version>1.0.39.2</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -266,6 +270,10 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

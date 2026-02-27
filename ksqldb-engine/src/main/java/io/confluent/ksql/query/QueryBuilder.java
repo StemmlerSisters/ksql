@@ -201,6 +201,9 @@ final class QueryBuilder {
         config.getConfig(true),
         processingLogContext
     );
+
+    streamsProperties.put(StreamsConfig.NUM_STANDBY_REPLICAS_CONFIG, 0);
+
     final Object buildResult = buildQueryImplementation(physicalPlan, runtimeBuildContext);
     final TransientQueryQueue queue =
         buildTransientQueryQueue(buildResult, limit, excludeTombstones, endOffsets);
@@ -653,7 +656,9 @@ final class QueryBuilder {
     final QueryErrorClassifier userErrorClassifiers = new MissingTopicClassifier(applicationId)
         .and(new AuthorizationClassifier(applicationId))
         .and(new KsqlFunctionClassifier(applicationId))
+        .and(new RecordTooLargeClassifier(applicationId))
         .and(new MissingSubjectClassifier(applicationId))
+        .and(new MissingSchemaClassifier(applicationId))
         .and(new SchemaAuthorizationClassifier(applicationId))
         .and(new KsqlSerializationClassifier(applicationId));
     return buildConfiguredClassifiers(ksqlConfig, applicationId)
